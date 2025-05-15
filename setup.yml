@@ -1,9 +1,51 @@
 ---
-- name: Configuración básica
+- name: Configuración avanzada con usuario y Docker
   hosts: localhost
-  connection: local
+  become: true
   tasks:
-    - name: Crear archivo de prueba
-      copy:
-        dest: /tmp/archivo-creado-por-ansible.txt
-        content: "¡Hola desde Ansible!"
+    - name: Crear usuario "deploy"
+      user:
+        name: deploy
+        password: "{{ 'mipassword123' | password_hash('sha512') }}"
+        shell: /bin/bash
+        state: present
+        create_home: yes
+
+    - name: Instalar dependencias para Docker
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      loop:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - software-properties-common
+
+    - name: Añadir GPG key de Docker
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Añadir repositorio de Docker
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Instalar Docker
+      apt:
+        name: docker-ce
+        state: present
+        update_cache: yes
+
+    - name: Añadir usuario "deploy" al grupo docker
+      user:
+        name: deploy
+        groups: docker
+        append: yes
+
+    - name: Iniciar y habilitar Docker
+      service:
+        name: docker
+        state: started
+        enabled: true
