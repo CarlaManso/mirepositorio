@@ -1,0 +1,9 @@
+---
+- name: Configuración básica
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Crear archivo de prueba
+      copy:
+        dest: /tmp/archivo-creado-por-ansible.txt
+        content: "¡Hola desde Ansible!"
